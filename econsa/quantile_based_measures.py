@@ -61,16 +61,16 @@ def mcs_quantile(
     Returns
     -------
     q1_alp : np.ndarray
-        Quantile based measure. Shape has the form (len(alpha), n_params).
+        Quantile based measure. Shape has the form (len(alp), n_params).
 
     q2_alp : np.ndarray
-        Quantile based measure. Shape has the form (len(alpha), n_params).
+        Quantile based measure. Shape has the form (len(alp), n_params).
 
-    Q1_alp : np.ndarray
-        Nomalized quantile based measure. Shape has the form (len(alpha), n_params).
+    nomalized_q1_alp : np.ndarray
+        Nomalized quantile based measure. Shape has the form (len(alp), n_params).
 
-    Q2_alp : np.ndarray
-        Nomalized quantile based measure. Shape has the form (len(alpha), n_params).
+    nomalized_q2_alp : np.ndarray
+        Nomalized quantile based measure. Shape has the form (len(alp), n_params).
 
     References
     ----------
@@ -91,11 +91,11 @@ def mcs_quantile(
     )
 
     # Get nomalized quantile based measures
-    Q1_alp, Q2_alp = _nomalized_quantile_based_measures(
+    nomalized_q1_alp, nomalized_q2_alp = _nomalized_quantile_based_measures(
         func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
     )
 
-    return q1_alp, q2_alp, Q1_alp, Q2_alp
+    return q1_alp, q2_alp, nomalized_q1_alp, nomalized_q2_alp
 
 
 def _get_unconditional_sample(
@@ -103,78 +103,81 @@ def _get_unconditional_sample(
 ):
     """Generate a base sample set according to joint PDF."""
     # Generate uniform distributed sample
-    A = np.zeros((n_draws, n_params))
-    X001 = cp.generate_samples(order=n_draws + skip, domain=n_params, rule="S").T
-    X01 = X001[skip:, :n_params]
+    u_1 = cp.generate_samples(order=n_draws + skip, domain=n_params, rule="S").T
+    u_2 = u_1[skip:, :n_params]
+    unconditional_sample = np.zeros((n_draws, n_params))
 
     # Transform uniform draw into assigned joint PDF
     if dist_type == "Normal":
-        X1 = norm.ppf(X01)
+        z = norm.ppf(u_2)
         cholesky = np.linalg.cholesky(scale)
-        A = loc + cholesky.dot(X1.T).T
+        unconditional_sample = loc + cholesky.dot(z.T).T
     elif dist_type == "Exponential":
-        A = expon.ppf(X01, loc, scale)
+        unconditional_sample = expon.ppf(u_2, loc, scale)
     elif dist_type == "Uniform":
-        A = uniform.ppf(X01, loc, scale)
+        unconditional_sample = uniform.ppf(u_2, loc, scale)
     else:
         raise NotImplementedError
 
-    return A
+    return unconditional_sample
 
 
 def _get_conditional_sample(
     n_params, loc, scale, dist_type, n_draws, m, skip,
 ):
     """Generate a conditional sample set from the base sample set."""
-    A = _get_unconditional_sample(n_params, loc, scale, dist_type, n_draws, m, skip)
-    B = A[:m]
-    # conditional sample matrix C with shape of (m, n_params, n_draws, n_params)
-    C = np.array(
+    unconditional_sample = _get_unconditional_sample(
+        n_params, loc, scale, dist_type, n_draws, m, skip,
+    )
+    conditional_bin = unconditional_sample[:m]
+    # conditional sample matrix with shape of (m, n_params, n_draws, n_params)
+    conditional_sample = np.array(
         [[np.zeros((n_draws, n_params)) for x in range(n_params)] for z in range(m)],
         dtype=np.float64,
     )
 
     for i in range(n_params):
         for j in range(m):
-            C[j, i] = A
-            C[j, i, :, i] = B[j, i]
+            conditional_sample[j, i] = unconditional_sample
+            conditional_sample[j, i, :, i] = conditional_bin[j, i]
 
-    return C
+    return conditional_sample
 
 
-def _unconditional_q_Y(
+def _unconditional_q_y(
     func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
 ):
-    """Calculate quantiles of outputs with base sample set as inputs."""
-    A = _get_unconditional_sample(n_params, loc, scale, dist_type, n_draws, m, skip)
+    """Calculate quantiles of outputs with unconditional sample set as inputs."""
+    unconditional_sample = _get_unconditional_sample(
+        n_params, loc, scale, dist_type, n_draws, m, skip,
+    )
 
     # Equation 26 & 23
-    Y1 = func(A)  # values of outputs
-    y1 = np.sort(Y1)  # reorder in ascending order
+    y_1 = func(unconditional_sample)  # values of outputs
+    y_1_asc = np.sort(y_1)  # reorder in ascending order
     q_index = (np.floor(alp * n_draws) - 1).astype(int)
-    qy_alp1 = y1[q_index]  # quantiles corresponding to alpha
+    qy_alp1 = y_1_asc[q_index]  # quantiles corresponding to alpha
 
     return qy_alp1
 
 
-def _conditional_q_Y(
+def _conditional_q_y(
     func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
 ):
     """Calculate quantiles of outputs with conditional sample set as inputs."""
-    C = _get_conditional_sample(
+    conditional_sample = _get_conditional_sample(
         n_params, loc, scale, dist_type, n_draws, m, skip,
     )  # shape(m, n_params, n_draws, n_params)
 
     # initialize values of conditional outputs.
-    Y2 = np.array(
+    y_2 = np.array(
         [[np.zeros((n_draws, 1)) for x in range(n_params)] for z in range(m)],
         dtype=np.float64,
     )  # shape(n_draws, n_params, n_draws, 1)
-    y2 = np.array(
+    y_2_asc = np.array(
         [[np.zeros((n_draws, 1)) for x in range(n_params)] for z in range(m)],
         dtype=np.float64,
     )
-
     # initialize quantile of conditional outputs.
     qy_alp2 = np.array(
         [[np.zeros((len(alp), m)) for x in range(n_params)] for z in range(1)],
@@ -185,12 +188,12 @@ def _conditional_q_Y(
     for i in range(n_params):
         for j in range(m):
             # values of conditional outputs
-            Y2[j, i] = np.vstack(func(C[j, i]))
-            Y2[j, i].sort(axis=0)
-            y2[j, i] = Y2[j, i]  # reorder in ascending order
-            # conditioanl q_Y(alp)
+            y_2[j, i] = np.vstack(func(conditional_sample[j, i]))
+            y_2[j, i].sort(axis=0)
+            y_2_asc[j, i] = y_2[j, i]  # reorder in ascending order
+            # conditioanl q_y(alp)
             for pp in range(len(alp)):
-                qy_alp2[0, i, pp, j] = y2[j, i][
+                qy_alp2[0, i, pp, j] = y_2_asc[j, i][
                     (np.floor(alp[pp] * n_draws) - 1).astype(int)
                 ]  # quantiles corresponding to alpha
     return qy_alp2
@@ -200,10 +203,10 @@ def _quantile_based_measures(
     func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
 ):
     """Compute MC/QMC estimators of quantile based measures."""
-    qy_alp1 = _unconditional_q_Y(
+    qy_alp1 = _unconditional_q_y(
         func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
     )
-    qy_alp2 = _conditional_q_Y(
+    qy_alp2 = _conditional_q_y(
         func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
     )
 
@@ -236,15 +239,15 @@ def _nomalized_quantile_based_measures(
     # initialize quantile measures arrays.
     q1 = np.zeros(len(alp))
     q2 = np.zeros(len(alp))
-    Q1_alp = np.zeros((len(alp), n_params))
-    Q2_alp = np.zeros((len(alp), n_params))
+    nomalized_q1_alp = np.zeros((len(alp), n_params))
+    nomalized_q2_alp = np.zeros((len(alp), n_params))
 
     # Equation 13 & 14
     for pp in range(len(alp)):
         q1[pp] = np.sum(q1_alp[pp, :])
         q2[pp] = np.sum(q2_alp[pp, :])
         for i in range(n_params):
-            Q1_alp[pp, i] = q1_alp[pp, i] / q1[pp]
-            Q2_alp[pp, i] = q2_alp[pp, i] / q2[pp]
+            nomalized_q1_alp[pp, i] = q1_alp[pp, i] / q1[pp]
+            nomalized_q2_alp[pp, i] = q2_alp[pp, i] / q2[pp]
 
-    return Q1_alp, Q2_alp
+    return nomalized_q1_alp, nomalized_q2_alp
