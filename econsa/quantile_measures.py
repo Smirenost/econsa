@@ -15,7 +15,14 @@ from scipy.stats import uniform
 
 
 def mcs_quantile(
-    func, n_params, loc, scale, dist_type, n_draws=2 ** 13, m=64, skip=0,
+    func,
+    n_params,
+    loc,
+    scale,
+    dist_type,
+    n_draws=2 ** 13,
+    m=64,
+    skip=0,
 ):
     r"""Compute Monte Carlo estimators of quantile based global sensitivity measures.
 
@@ -74,12 +81,14 @@ def mcs_quantile(
 
     References
     ----------
-    .. [K2019] S. Kucherenko, S. Song, L. Wang. Quantile based global
-        sensitivity measures, Reliab. Eng. Syst. Saf. 185 (2019) 35–48.
+    .. [K2019] Kucherenko, S., Song, S., & Wang, L. (2019).
+        Quantile based global sensitivity measures.
+        Reliability Engineering & System Safety, 185, 35-48.
 
-    .. [K2017] Kucherenko S, Song S. Different numerical estimators
-        for main effect global sensitivity indices. Reliab Eng Syst
-        Saf 2017;165:222–38.
+    .. [K2017] Kucherenko, S. & Song, S. (2017).
+        Different numerical estimators for main effect global
+        sensitivity indices. Reliability Engineering & System
+        Safety, 165, 222-238.
     """
     # range of alpha
     dalp = (0.98 - 0.02) / 30
@@ -87,19 +96,41 @@ def mcs_quantile(
 
     # Get quantile based measures
     q1_alp, q2_alp = _quantile_based_measures(
-        func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+        func,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        alp,
+        n_draws,
+        m,
+        skip,
     )
 
     # Get nomalized quantile based measures
     nomalized_q1_alp, nomalized_q2_alp = _nomalized_quantile_based_measures(
-        func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+        func,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        alp,
+        n_draws,
+        m,
+        skip,
     )
 
     return q1_alp, q2_alp, nomalized_q1_alp, nomalized_q2_alp
 
 
 def _get_unconditional_sample(
-    n_params, loc, scale, dist_type, n_draws, m, skip=0,
+    n_params,
+    loc,
+    scale,
+    dist_type,
+    n_draws,
+    m,
+    skip=0,
 ):
     """Generate a base sample set according to joint PDF."""
     # Generate uniform distributed sample
@@ -123,11 +154,23 @@ def _get_unconditional_sample(
 
 
 def _get_conditional_sample(
-    n_params, loc, scale, dist_type, n_draws, m, skip,
+    n_params,
+    loc,
+    scale,
+    dist_type,
+    n_draws,
+    m,
+    skip,
 ):
     """Generate a conditional sample set from the base sample set."""
     unconditional_sample = _get_unconditional_sample(
-        n_params, loc, scale, dist_type, n_draws, m, skip,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        n_draws,
+        m,
+        skip,
     )
     conditional_bin = unconditional_sample[:m]
     # conditional sample matrix with shape of (m, n_params, n_draws, n_params)
@@ -145,11 +188,25 @@ def _get_conditional_sample(
 
 
 def _unconditional_q_y(
-    func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+    func,
+    n_params,
+    loc,
+    scale,
+    dist_type,
+    alp,
+    n_draws,
+    m,
+    skip,
 ):
     """Calculate quantiles of outputs with unconditional sample set as inputs."""
     unconditional_sample = _get_unconditional_sample(
-        n_params, loc, scale, dist_type, n_draws, m, skip,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        n_draws,
+        m,
+        skip,
     )
 
     # Equation 26 & 23
@@ -162,11 +219,25 @@ def _unconditional_q_y(
 
 
 def _conditional_q_y(
-    func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+    func,
+    n_params,
+    loc,
+    scale,
+    dist_type,
+    alp,
+    n_draws,
+    m,
+    skip,
 ):
     """Calculate quantiles of outputs with conditional sample set as inputs."""
     conditional_sample = _get_conditional_sample(
-        n_params, loc, scale, dist_type, n_draws, m, skip,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        n_draws,
+        m,
+        skip,
     )  # shape(m, n_params, n_draws, n_params)
 
     # initialize values of conditional outputs.
@@ -200,14 +271,38 @@ def _conditional_q_y(
 
 
 def _quantile_based_measures(
-    func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+    func,
+    n_params,
+    loc,
+    scale,
+    dist_type,
+    alp,
+    n_draws,
+    m,
+    skip,
 ):
     """Compute MC/QMC estimators of quantile based measures."""
     qy_alp1 = _unconditional_q_y(
-        func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+        func,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        alp,
+        n_draws,
+        m,
+        skip,
     )
     qy_alp2 = _conditional_q_y(
-        func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+        func,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        alp,
+        n_draws,
+        m,
+        skip,
     )
 
     # initialization
@@ -229,11 +324,27 @@ def _quantile_based_measures(
 
 
 def _nomalized_quantile_based_measures(
-    func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+    func,
+    n_params,
+    loc,
+    scale,
+    dist_type,
+    alp,
+    n_draws,
+    m,
+    skip,
 ):
     """Compute MC/QMC estimators of nomalized quantile based measures."""
     q1_alp, q2_alp = _quantile_based_measures(
-        func, n_params, loc, scale, dist_type, alp, n_draws, m, skip,
+        func,
+        n_params,
+        loc,
+        scale,
+        dist_type,
+        alp,
+        n_draws,
+        m,
+        skip,
     )
 
     # initialize quantile measures arrays.
