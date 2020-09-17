@@ -61,7 +61,11 @@ def cond_gaussian_copula(cov, dependent_ind, given_ind, given_value_u, size=1):
 
     mean = np.zeros(cov.shape[0])
     cond_mean, cond_cov = cond_mvn(
-        mean, _cov2corr(cov), dependent_ind, given_ind, given_value_y,
+        mean,
+        _cov2corr(cov),
+        dependent_ind,
+        given_ind,
+        given_value_y,
     )
 
     # C(u, Sigma)

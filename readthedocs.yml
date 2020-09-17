@@ -9,6 +9,5 @@ python:
 conda:
   environment: configurations/rtd_environment.yml
 
-
 formats:
   - pdf

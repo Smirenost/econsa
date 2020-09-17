@@ -85,6 +85,7 @@ def test_gc_correlation_functioning():
     marginals, corr = get_strategies("test_gc_correlation_functioning")
     corr_transformed = gc_correlation(marginals, corr)
     cp.Nataf(cp.J(*marginals), corr_transformed)
+
     return "the function ended without error"
 
 
@@ -111,24 +112,25 @@ def test_gc_correlation_2d_force_calc():
     candidates["corr"], candidates["stat"] = list(), list()
 
     is_success = False
-    for num_points in [1000, 10000, 100000]:
-        for rule in ["halton", "sobol"]:
-            if is_success:
-                break
+    for order in [5, 10, 15, 20]:
+        if is_success:
+            break
 
-            kwargs = dict()
-            kwargs["num_points"] = num_points
-            kwargs["rule"] = rule
+        kwargs = dict()
+        kwargs["order"] = order
 
-            corr_transformed = gc_correlation(
-                marginals, corr_desired, **kwargs, force_calc=True,
-            )
-            copula = cp.Nataf(cp.J(*marginals), corr_transformed)
-            corr_copula = np.corrcoef(copula.sample(10000000))
-            candidates["stat"].append(np.abs(corr_desired[0, 1] - corr_copula[0, 1]))
-            candidates["corr"].append(corr_copula)
+        corr_transformed = gc_correlation(
+            marginals,
+            corr_desired,
+            **kwargs,
+            force_calc=True,
+        )
+        copula = cp.Nataf(cp.J(*marginals), corr_transformed)
+        corr_copula = np.corrcoef(copula.sample(10000000))
+        candidates["stat"].append(np.abs(corr_desired[0, 1] - corr_copula[0, 1]))
+        candidates["corr"].append(corr_copula)
 
-            is_success = candidates["stat"][-1] < precision
+        is_success = candidates["stat"][-1] < precision
 
     corr_copula = candidates["corr"][np.argmin(candidates["stat"])]
     np.testing.assert_allclose(corr_desired, corr_copula, rtol, atol)

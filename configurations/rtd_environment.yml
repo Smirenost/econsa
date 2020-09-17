@@ -8,15 +8,17 @@ channels:
 dependencies:
   - python=3.7
   - sphinx
-  - pandas>=0.25
-  - numpy=1.16
+  - pandas
+  - numpy=1.18
   - pip
   - scipy
+  - statsmodels
   - jupyter
   - jupyterlab
   - seaborn
   - numba
   - pdbpp
+  - temfpy>=1.1
   - chaospy
   - pytest
   - pytest-black
@@ -27,9 +29,9 @@ dependencies:
   - nbsphinx
   - sphinx_rtd_theme
   - sphinxcontrib-bibtex
+  - pre-commit
 
   - pip:
-    - salib==1.3.8
     - isort
     - pytest-stress
     - pytest-randomly
@@ -37,6 +39,5 @@ dependencies:
     - black-nb
     - flake8-nb
     - numpydoc
-    - pre-commit
     - cairosvg
     - sphinxcontrib-svg2pdfconverter[CairoSVG]

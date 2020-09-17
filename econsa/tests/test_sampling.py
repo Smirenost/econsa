@@ -49,8 +49,7 @@ def get_strategies(name):
 
 
 def test_cond_mvn():
-    """Test cond_mvn against the original from R package cond_mvnorm.
-    """
+    """Test cond_mvn against the original from R package cond_mvnorm."""
     request = get_strategies("cond_mvn")
 
     r_cond_mean, r_cond_cov = r_cond_mvn(*request)
@@ -61,8 +60,7 @@ def test_cond_mvn():
 
 
 def test_cond_mvn_exception_given():
-    """Test cond_mvn raises exceptions when invalid `given_ind` or `given_value` is passed.
-    """
+    """Test cond_mvn raises exceptions when invalid `given_ind` or `given_value` is passed."""
     mean, cov, dependent_ind, given_ind, given_value = get_strategies(
         "cond_mvn_exception_given",
     )
@@ -79,8 +77,7 @@ def test_cond_mvn_exception_given():
 
 
 def test_cond_mvn_exception_cov():
-    """Test cond_mvn raises exceptions when invalid `cov` is passed.
-    """
+    """Test cond_mvn raises exceptions when invalid `cov` is passed."""
     mean, cov, dependent_ind, given_ind, given_value = get_strategies(
         "test_cond_mvn_exception_cov",
     )

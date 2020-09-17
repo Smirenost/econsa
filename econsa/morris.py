@@ -56,7 +56,11 @@ def elementary_effects(func, params, cov, n_draws, sampling_scheme="sobol", n_co
     cov_np = cov.to_numpy()
 
     dep_samples_ind_x, a_sample_ind_x = _dependent_draws(
-        z_a, z_b, mean_np, cov_np, "ind",
+        z_a,
+        z_b,
+        mean_np,
+        cov_np,
+        "ind",
     )
 
     dep_samples_corr_x, _ = _dependent_draws(z_a, z_b, mean_np, cov_np, "corr")
@@ -72,17 +76,29 @@ def elementary_effects(func, params, cov, n_draws, sampling_scheme="sobol", n_co
     deltas = u_b - u_a
 
     mu_ind, sigma_ind = _calculate_indices(
-        evals_ind, evals_base_ind, deltas, params.index,
+        evals_ind,
+        evals_base_ind,
+        deltas,
+        params.index,
     )
     mu_corr, sigma_corr = _calculate_indices(
-        evals_corr, evals_base_corr, deltas, params.index,
+        evals_corr,
+        evals_base_corr,
+        deltas,
+        params.index,
     )
 
     mu_ind_cum, sigma_ind_cum = _calculate_cumulative_indices(
-        evals_ind, evals_base_ind, deltas, params.index,
+        evals_ind,
+        evals_base_ind,
+        deltas,
+        params.index,
     )
     mu_corr_cum, sigma_corr_cum = _calculate_cumulative_indices(
-        evals_corr, evals_base_corr, deltas, params.index,
+        evals_corr,
+        evals_base_corr,
+        deltas,
+        params.index,
     )
 
     res = {
@@ -118,7 +134,8 @@ def _get_uniform_base_draws(n_draws, n_params, sampling_scheme):
     """
     if sampling_scheme == "sobol":
         u = cp.generate_samples(order=n_draws * 2 * n_params, rule="S").reshape(
-            n_draws, -1,
+            n_draws,
+            -1,
         )
     elif sampling_scheme == "random":
         u = np.random.uniform(low=1e-5, high=1 - 1e-5, size=(n_draws, 2 * n_params))
@@ -205,14 +222,16 @@ def _dependent_draws(z_a, z_b, mean, cov, kind):
     shifted_chols = np.linalg.cholesky(shifted_covs)
     a_sample_x_shifted = (
         np.matmul(
-            shifted_chols, a_sample_z_shifted.reshape(n_draws, n_params, n_params, 1),
+            shifted_chols,
+            a_sample_z_shifted.reshape(n_draws, n_params, n_params, 1),
         ).reshape(n_draws, n_params, n_params)
         + shifted_means
     )
 
     ab_sample_x_shifted = (
         np.matmul(
-            shifted_chols, ab_sample_z_shifted.reshape(n_draws, n_params, n_params, 1),
+            shifted_chols,
+            ab_sample_z_shifted.reshape(n_draws, n_params, n_params, 1),
         ).reshape(n_draws, n_params, n_params)
         + shifted_means
     )
@@ -224,7 +243,9 @@ def _dependent_draws(z_a, z_b, mean, cov, kind):
 
 
 @nb.guvectorize(
-    ["f8[:], i8, f8[:]", "i8[:], i8, i8[:]"], "(m), () -> (m)", nopython=True,
+    ["f8[:], i8, f8[:]", "i8[:], i8, i8[:]"],
+    "(m), () -> (m)",
+    nopython=True,
 )
 def _shift_sample(sample, k, out):
     """Re-sort sample such that the first k elements are moved to the end.

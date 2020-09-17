@@ -86,8 +86,7 @@ def test_cond_gaussian_copula():
 
 
 def test_cond_gaussian_copula_exception_u():
-    """Test cond_gaussian_copula raises exceptions when invalid ``given_value_u`` is passed.
-    """
+    """Test cond_gaussian_copula raises exceptions when invalid ``given_value_u`` is passed."""
     args = get_strategies("test_cond_gaussian_copula_exception_u")
 
     with pytest.raises(ValueError) as e:

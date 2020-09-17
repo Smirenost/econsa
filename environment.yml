@@ -33,6 +33,7 @@ dependencies:
   - r-r.utils
   - r-condmvnorm
   - rpy2==2.9.4
+  - pre-commit
 
   - pip:
     - isort
@@ -42,6 +43,5 @@ dependencies:
     - black-nb
     - flake8-nb
     - numpydoc
-    - pre-commit
     - cairosvg
     - sphinxcontrib-svg2pdfconverter[CairoSVG]

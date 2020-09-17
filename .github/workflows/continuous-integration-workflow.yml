@@ -16,9 +16,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: goanpeca/setup-miniconda@v1.0.2
+    - uses: goanpeca/setup-miniconda@v1
       with:
-          auto-update-conda: true
+          auto-update-conda: false
           activate-environment: econsa
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
@@ -27,10 +27,6 @@ jobs:
       shell: bash -l {0}
       run: |
         pytest --cov=econsa --cov-report=xml
-
-        # We want to make sure proper formatting of the notebooks.
-        flake8-nb; [ $? -eq 0 ] || exit 1
-        black-nb --check .; [ $? -eq 0 ] || exit 1
 
     - name: Run figures.
       if: runner.os == 'Linux'
@@ -49,5 +45,5 @@ jobs:
     - name: Run pre-commits.
       shell: bash -l {0}
       run: |
-        pre-commit install -f --install-hooks
+        pre-commit install
         pre-commit run --all-files
