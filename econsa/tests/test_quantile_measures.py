@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 from scipy.stats import norm
+from temfpy.uncertainty_quantification import simple_linear_function
 
 from econsa.quantile_measures import mcs_quantile
 
@@ -15,10 +16,9 @@ from econsa.quantile_measures import mcs_quantile
 def first_example_fixture():
     """First example test case."""
 
-    def func1(args):
-        """Function for test 1 from Kucherenko et al. 2019."""
-        result = np.sum(args, axis=1)
-        return result
+    def simple_linear_function_transposed(x):
+        """Simple linear function model but with variables stored in columns."""
+        return simple_linear_function(x.T)
 
     miu_1 = np.array([1, 3, 5, 7])
     cov_1 = np.array(
@@ -86,10 +86,12 @@ def first_example_fixture():
     expect_normalized_q1 = np.hstack(expect_normalized_q1).reshape((len(alp), dim_1))
 
     # Combine results
+    # tests for expect_q1 and expect_q2 pass only for decimal=0 at present,
+    # so they are excluded from the test temporarily.(need further check)
     quantile_measures_expected = (expect_normalized_q1, expect_normalized_q2)
 
     out = {
-        "func": func1,
+        "func": simple_linear_function_transposed,
         "n_params": dim_1,
         "loc": miu_1,
         "scale": cov_1,
@@ -119,4 +121,5 @@ def test_quantile_measures_first_example(first_example_fixture):
         n_draws=n_draws,
     )
 
+    # test for normalized quantile measures(q1 and q2 are excluded temporarily).
     assert_almost_equal(quantile_measures[2:], quantile_measures_expected, decimal=2)
